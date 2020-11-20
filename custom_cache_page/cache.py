@@ -15,16 +15,16 @@ def _cache_page(
 ):
     def _cache(view_func):
         @wraps(view_func)
-        def __cache(request, *args, **kwargs):
+        def __cache(self, request, *args, **kwargs):
             if getattr(request, 'do_not_cache', False):
-                return view_func(request, *args, **kwargs)
+                return view_func(self, request, *args, **kwargs)
             group = group_func(request) if group_func else None
             group_version = cache.get_or_set(group, 1, timeout=versions_timeout) if versioned else 0
             cache_key = hash_key(f'{prefix}:{group}:{group_version}:{key_func(request)}')
             response = cache.get(cache_key)
             process_caching = not response or getattr(request, '_bust_cache', False)
             if process_caching:
-                response = view_func(request, *args, **kwargs)
+                response = view_func(self, request, *args, **kwargs)
                 if response.status_code == 200:
                     patch_response_headers(response, timeout)
                     if hasattr(response, 'render') and callable(response.render):
