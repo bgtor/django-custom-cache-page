@@ -16,11 +16,14 @@ def _cache_page(
     def _cache(view_func):
         @wraps(view_func)
         def __cache(self, request, *args, **kwargs):
-            if getattr(request, 'do_not_cache', False):
-                return view_func(self, request, *args, **kwargs)
             group = group_func(request) if group_func else None
             group_version = cache.get_or_set(group, 1, timeout=versions_timeout) if versioned else 0
             cache_key = hash_key(f'{prefix}:{group}:{group_version}:{key_func(request)}')
+            if getattr(request, 'do_not_cache', False):
+                return view_func(self, request, *args, **kwargs)
+            if getattr(request, 'delete_cache', False):
+                cache.touch(cache_key, 1)
+                return view_func(self, request, *args, **kwargs)
             response = cache.get(cache_key)
             process_caching = not response or getattr(request, '_bust_cache', False)
             if process_caching:
