@@ -23,7 +23,9 @@ def _cache_page(
             if getattr(request, 'do_not_cache', False):
                 return view_func(self, request, *args, **kwargs)
             if request.GET.get("delete_cache", None):
-                cache.delete(cache_key)
+                group = key_func(request, self, only_group=True)
+                for key in cache.keys(group + "*"):
+                    cache.delete(key)
                 return view_func(self, request, *args, **kwargs)
             response = cache.get(cache_key)
             process_caching = not response or getattr(request, '_bust_cache', False)
