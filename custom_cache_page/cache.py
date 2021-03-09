@@ -1,3 +1,5 @@
+import json
+
 from django.utils.cache import patch_response_headers
 from functools import wraps
 
@@ -22,7 +24,7 @@ def _cache_page(
             cache_key = key_func(request, self)
             if getattr(request, 'do_not_cache', False):
                 return view_func(self, request, *args, **kwargs)
-            if request.GET.get("delete_cache", None):
+            if json.loads(request.GET.get("delete_cache", "false")):
                 group = key_func(request, self, only_group=True)
                 for key in cache.keys(group + "*"):
                     cache.delete(key)
